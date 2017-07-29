@@ -20,16 +20,16 @@ Observable.interval(1, TimeUnit.SECONDS)
       { throwable -> throwable.printStackTrace() })
 ```
 
-Effects mean anything that changes the external world such as the 
-state of a View.
-
-Logic are just ideas, such as,
+Logic are ideas such as,
  
 * ```Observable.interval(1, TimeUnit.SECONDS)``` is the idea of seconds
 * ```scan({ t1: Long, t2: Long -> t1+1 })``` is the idea of accumalating numbers over time
 * ```map { "Seconds elapsed: " + it }``` is the idea of mapping a number to a stream
 
-Nothing is happening in the real world.
+Effects mean anything that changes the external world such as, 
+
+* ```tv.text = next``` is affecting the state of the TextView
+* ```throwable.printStackTrace()``` is affecting the state of the console
 
 The guiding principle in Cycle is to seperate Logic and Effects by 
 having Effects in framework and Logic in your app. 
