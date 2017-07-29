@@ -38,7 +38,8 @@ fun viewDriver(view: View, viewStream: Observable<String>) {
 }
 ```
 
-We will also introduce an additional driver with the effect of 
+We would like to support more than one effect though so we will 
+also introduce an additional driver with the effect of 
 printing the state of the stream of Strings to console.
 
 ```kotlin
