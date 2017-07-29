@@ -2,6 +2,7 @@ package com.example.tricycle
 
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
+import android.util.Log
 import android.view.View
 import android.widget.TextView
 import io.reactivex.Observable
@@ -13,17 +14,31 @@ class MainActivity : AppCompatActivity() {
     super.onCreate(savedInstanceState)
     setContentView(R.layout.activity_main)
     val view = findViewById<View>(R.id.app)
-    val tv = findViewById<TextView>(R.id.textView)
 
-    // Logic
-    Observable.interval(1, TimeUnit.SECONDS)
-        .scan({ t1: Long, t2: Long -> t1+1 })
+    // Run Program
+    val sink = main().share() // convert to ConnectableObservable
+    viewDriver(view, sink)
+    logDriver(sink)
+  }
+
+  // Logic
+  fun main(): Observable<String> {
+    return Observable.interval(1, TimeUnit.SECONDS)
+        .scan({ secondsElapsed: Long, _ -> secondsElapsed+1 })
         .map { "Seconds elapsed: " + it }
-        .observeOn(AndroidSchedulers.mainThread())
+  }
 
-        // Effects
+  // Effect
+  fun viewDriver(view: View, viewStream: Observable<String>) {
+    viewStream
+        .observeOn(AndroidSchedulers.mainThread())
         .subscribe(
-            { next -> tv.text = next },
-            { throwable -> throwable.printStackTrace() })
+        { next -> view.findViewById<TextView>(R.id.textView).text = next },
+        { throwable -> throwable.printStackTrace() })
+  }
+
+  // Effect
+  fun logDriver(messageStream: Observable<String>) {
+    messageStream.subscribe({Log.d("LogDriver", it)})
   }
 }

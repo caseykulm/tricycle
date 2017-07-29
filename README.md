@@ -1,37 +1,65 @@
-## Step 1: Separate logic from effects in Cycle
+## Step 2: Main Function and Effect Functions
 
-In our ```MainActivity``` we can see an example of a basic timer 
-app that increases a counter.
+In our ```MainActivity``` we have now made two functions to 
+clearly to give structure to our application with logic and 
+effects.
  
-The goal is to point out the difference between logic and effects.
+The code was split into 3 functions.
 
-The entire program boils down to,
+### Logic Function
 
+We break out the same bit of code for the logic into its own 
+function named main.
+
+```kotlin
+fun main(): Observable<String> {
+  return Observable.interval(1, TimeUnit.SECONDS)
+      .scan({ secondsElapsed: Long, _ -> secondsElapsed+1 })
+      .map { "Seconds elapsed: " + it }
+}
 ```
-// Logic
-Observable.interval(1, TimeUnit.SECONDS)
-  .scan({ t1: Long, t2: Long -> t1+1 })
-  .map { "Seconds elapsed: " + it }
-  .observeOn(AndroidSchedulers.mainThread())
-  
-  // Effects
-  .subscribe(
-      { next -> tv.text = next },
+
+### Effect Functions (i.e. Drivers)
+
+We will introduce the term Drivers to describe functions that 
+take a stream, and perform some side effect given the state of 
+your app.
+
+We break out the same bit of code for the effects of updating the 
+TextView with our stream of Strings, or print an error to console.
+
+```kotlin
+fun viewDriver(view: View, viewStream: Observable<String>) {
+  viewStream
+      .observeOn(AndroidSchedulers.mainThread())
+      .subscribe(
+      { next -> view.findViewById<TextView>(R.id.textView).text = next },
       { throwable -> throwable.printStackTrace() })
+}
 ```
 
-Logic are ideas such as,
- 
-* ```Observable.interval(1, TimeUnit.SECONDS)``` is the idea of seconds
-* ```scan({ t1: Long, t2: Long -> t1+1 })``` is the idea of accumalating numbers over time
-* ```map { "Seconds elapsed: " + it }``` is the idea of mapping a number to a stream
+We will also introduce an additional driver with the effect of 
+printing the state of the stream of Strings to console.
 
-Effects mean anything that changes the external world such as, 
+```kotlin
+fun logDriver(messageStream: Observable<String>) {
+  messageStream.subscribe({Log.d("LogDriver", it)})
+}
+```
 
-* ```tv.text = next``` is affecting the state of the TextView
-* ```throwable.printStackTrace()``` is affecting the state of the console
+### Wiring It Up
 
-The guiding principle in Cycle is to seperate Logic and Effects by 
-having Effects in framework and Logic in your app. 
- 
-This should make it easier to test, and easier to swap out effects. 
+```kotlin
+val sink = main().share() // convert to ConnectableObservable
+viewDriver(view, sink)
+logDriver(sink)
+```
+
+We call the stream of Strings sink because data is starting in 
+main, and not coming back out.
+
+Also ```.share()``` is so that we can use the same stream with 
+many subscribers which is not enabled by default. To learn more 
+I would recommend reading up on the [RxJava Wiki](https://github.com/ReactiveX/RxJava/wiki/Connectable-Observable-Operators) 
+about them, and also [Kaushik Gopal's Talk](https://speakerdeck.com/kaushikgopal/rx-by-example-volume-3-the-multicast-edition) 
+about them.
