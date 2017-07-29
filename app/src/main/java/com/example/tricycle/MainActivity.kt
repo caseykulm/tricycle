@@ -16,16 +16,28 @@ class MainActivity : AppCompatActivity() {
     val view = findViewById<View>(R.id.app)
 
     // Run Program
-    val sink = main().share() // convert to ConnectableObservable
-    viewDriver(view, sink)
-    logDriver(sink)
+    val sinks = main()
+    viewDriver(view, sinks.view())
+    logDriver(sinks.log())
+  }
+
+  interface Sinks {
+    fun view(): Observable<String>
+    fun log(): Observable<Long>
   }
 
   // Logic
-  fun main(): Observable<String> {
-    return Observable.interval(1, TimeUnit.SECONDS)
-        .scan({ secondsElapsed: Long, _ -> secondsElapsed+1 })
-        .map { "Seconds elapsed: " + it }
+  fun main(): Sinks {
+    return object: Sinks {
+      override fun view(): Observable<String> =
+          Observable.interval(1, TimeUnit.SECONDS)
+          .scan({ secondsElapsed: Long, _ -> secondsElapsed+1 })
+          .map { "Seconds elapsed: " + it }
+
+      override fun log(): Observable<Long> =
+          Observable.interval(2, TimeUnit.SECONDS)
+          .scan({ secondsElapsed: Long, _ -> secondsElapsed+1 })
+    }
   }
 
   // Effect
@@ -38,7 +50,7 @@ class MainActivity : AppCompatActivity() {
   }
 
   // Effect
-  fun logDriver(messageStream: Observable<String>) {
-    messageStream.subscribe({Log.d("LogDriver", it)})
+  fun logDriver(messageStream: Observable<Long>) {
+    messageStream.subscribe({Log.d("LogDriver", it.toString())})
   }
 }
